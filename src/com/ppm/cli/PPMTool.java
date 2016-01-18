@@ -93,52 +93,17 @@ public class PPMTool
 		try
 		{
 			final CommandLine parsed = new DefaultParser().parse(options, args);
-			if(parsed.hasOption(OP_HELP))
-			{
-				new HelpFormatter().printHelp(PPMTool.class.getName(), options);
-				return;
-			}
-			final int maxColor;
-			if(parsed.hasOption(OP_OUT_MAX_COLOR))
-			{
-				final String maxColorStr = parsed.getOptionValue(OP_OUT_MAX_COLOR);
-				try
-				{
-					final Integer maxColorObj = Integer.parseInt(maxColorStr);
-					if(maxColorObj.intValue() < 0 || maxColorObj.intValue() > PPM.MAX_MAX_COLOR_VALUE)
-						throw new NumberFormatException("Invalid -" + OP_OUT_MAX_COLOR + "(--" + OP_OUT_MAX_COLOR_LONG + "): " + maxColorStr);
-					maxColor = maxColorObj.intValue();
-				}
-				catch(NumberFormatException e) { throw new ParseException(e.getMessage()); }
-			}
-			else
-			{
-				maxColor = DEFAULT_MAX_COLOR;
-			}
-			final EdgeDetectionAlgorithm edgeDetectionAlgorithm;
-			if(parsed.hasOption(OP_OUT_EDGE_DETECTION))
-			{
-				final String edgeDetectionAlgorithmStr = parsed.getOptionValue(OP_OUT_EDGE_DETECTION);
-				if(edgeDetectionAlgorithmStr == null)
-				{
-					edgeDetectionAlgorithm = DEFAULT_EDGE_DETECTION_ALGORITHM;
-				}
-				else
-				{
-					try { edgeDetectionAlgorithm = EdgeDetectionAlgorithm.valueOf(edgeDetectionAlgorithmStr); }
-					catch(IllegalArgumentException e) { throw new ParseException("Invalid -" + OP_OUT_EDGE_DETECTION + "(--" + OP_OUT_EDGE_DETECTION_LONG + "): " + edgeDetectionAlgorithmStr); }
-				}
-			}
-			else
-			{
-				edgeDetectionAlgorithm = null;
-			}
+			if(processHelp(parsed))
+				System.exit(0);
+			final int maxColor = getMaxColor(parsed);
+			final EdgeDetectionAlgorithm edgeDetectionAlgorithm = getEdgeDetectionAlgorithm(parsed);
 			final PPM ppm;
 			{
 				final BufferedReader in = getInput(parsed);
 				try { ppm = new PPM(in); }
 				finally { in.close(); }
 			}
+			//TODO allow specification of order of operations
 			if(edgeDetectionAlgorithm != null)
 				ppm.detectEdges(edgeDetectionAlgorithm);
 			if(parsed.hasOption(OP_OUT_GREYSCALE))
@@ -157,6 +122,55 @@ public class PPMTool
 			System.exit(255);
 		}
 	}
+	private static boolean processHelp(final CommandLine parsed) throws IllegalArgumentException
+	{
+		Utils.throwIAEIfNull(parsed, CommandLine.class, "parsed");
+		if(parsed.hasOption(OP_HELP))
+		{
+			new HelpFormatter().printHelp(PPMTool.class.getName(), options);
+			return true;
+		}
+		return false;
+	}
+	private static int getMaxColor(final CommandLine parsed) throws IllegalArgumentException, ParseException
+	{
+		Utils.throwIAEIfNull(parsed, CommandLine.class, "parsed");
+		final int ret;
+		if(parsed.hasOption(OP_OUT_MAX_COLOR))
+		{
+			final String maxColorStr = parsed.getOptionValue(OP_OUT_MAX_COLOR);
+			try
+			{
+				final Integer maxColorObj = Integer.parseInt(maxColorStr);
+				if(maxColorObj.intValue() < 0 || maxColorObj.intValue() > PPM.MAX_MAX_COLOR_VALUE)
+					throw new NumberFormatException("Invalid -" + OP_OUT_MAX_COLOR + "(--" + OP_OUT_MAX_COLOR_LONG + "): " + maxColorStr);
+				ret = maxColorObj.intValue();
+			}
+			catch(NumberFormatException e) { throw new ParseException(e.getMessage()); }
+		}
+		else
+			ret = DEFAULT_MAX_COLOR;
+		return ret;
+	}
+	private static EdgeDetectionAlgorithm getEdgeDetectionAlgorithm(final CommandLine parsed) throws IllegalArgumentException, ParseException
+	{
+		Utils.throwIAEIfNull(parsed, CommandLine.class, "parsed");
+		final EdgeDetectionAlgorithm ret;
+		if(parsed.hasOption(OP_OUT_EDGE_DETECTION))
+		{
+			final String edgeDetectionAlgorithmStr = parsed.getOptionValue(OP_OUT_EDGE_DETECTION);
+			if(edgeDetectionAlgorithmStr == null)
+				ret = DEFAULT_EDGE_DETECTION_ALGORITHM;
+			else
+			{
+				try { ret = EdgeDetectionAlgorithm.valueOf(edgeDetectionAlgorithmStr); }
+				catch(IllegalArgumentException e) { throw new ParseException("Invalid -" + OP_OUT_EDGE_DETECTION + "(--" + OP_OUT_EDGE_DETECTION_LONG + "): " + edgeDetectionAlgorithmStr); }
+			}
+		}
+		else
+			ret = null;
+		return ret;
+	}
 	private static void doOutput(final CommandLine parsed, final PPM ppm, final int maxColor) throws IllegalArgumentException, IOException, ParseException
 	{
 		Utils.throwIAEIfNull(parsed, CommandLine.class, "parsed");
@@ -167,9 +181,9 @@ public class PPMTool
 		if(! parsed.hasOption(OP_STDOUT) && ! parsed.hasOption(OP_OUT_FILE) && ! parsed.hasOption(OP_DISPLAY))
 		{
 			throw new ParseException("Expecting one or more of the following output arguments to be provided: ["
-				+ "-" + OP_STDOUT + "(--" + OP_STDOUT_LONG + "), "
-				+ "-" + OP_OUT_FILE + "(--" + OP_OUT_FILE_LONG + "), "
-				+ "-" + OP_DISPLAY + "(--" + OP_DISPLAY_LONG + ")"
+				+ getOptionStr(OP_STDOUT, OP_STDOUT_LONG) + ", "
+				+ getOptionStr(OP_OUT_FILE, OP_OUT_FILE_LONG) + ", "
+				+ getOptionStr(OP_DISPLAY, OP_DISPLAY_LONG)
 				+ "]");
 		}
 		//Write to output streams
@@ -211,8 +225,12 @@ public class PPMTool
 		else if(parsed.hasOption(OP_STDIN))
 			return new BufferedReader(new InputStreamReader(System.in));
 		throw new ParseException("Expecting one of the following input arguments to be provided: ["
-			+ "-" + OP_IN_FILE + "(--" + OP_IN_FILE_LONG + "), "
-			+ "-" + OP_STDIN + "(--" + OP_STDIN_LONG + ")"
+			+ getOptionStr(OP_IN_FILE, OP_IN_FILE_LONG) + ","
+			+ getOptionStr(OP_STDIN, OP_STDIN_LONG)
 			+ "]");
+	}
+	private static String getOptionStr(final String opShort, final String opLong)
+	{
+		return "-"+String.valueOf(opShort)+"(--"+String.valueOf(opLong)+")";
 	}
 }
