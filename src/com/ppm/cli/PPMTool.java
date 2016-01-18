@@ -106,7 +106,7 @@ public class PPMTool
 				{
 					final Integer maxColorObj = Integer.parseInt(maxColorStr);
 					if(maxColorObj.intValue() < 0 || maxColorObj.intValue() > PPM.MAX_MAX_COLOR_VALUE)
-						throw new NumberFormatException("Invalid " + OP_OUT_MAX_COLOR + "(" + OP_OUT_MAX_COLOR_LONG + ")");
+						throw new NumberFormatException("Invalid -" + OP_OUT_MAX_COLOR + "(--" + OP_OUT_MAX_COLOR_LONG + "): " + maxColorStr);
 					maxColor = maxColorObj.intValue();
 				}
 				catch(NumberFormatException e) { throw new ParseException(e.getMessage()); }
