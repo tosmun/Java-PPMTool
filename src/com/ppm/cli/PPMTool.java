@@ -28,6 +28,10 @@ public class PPMTool
 {
 	private static final int DEFAULT_MAX_COLOR = 255;
 	private static final EdgeDetectionAlgorithm DEFAULT_EDGE_DETECTION_ALGORITHM = EdgeDetectionAlgorithm.SOBEL;
+	//Help
+	private static final String OP_HELP = "h";
+	private static final String OP_HELP_LONG = "help";
+	private static final String OP_HELP_HELP = "Display usage information";
 	//Input
 	private static final String OP_STDIN = "i";
 	private static final String OP_STDIN_LONG = "stdin";
@@ -58,50 +62,42 @@ public class PPMTool
 	private static Options options = new Options();
 	static
 	{
-		Option op;
+		//Help
+		options.addOption(new Option(OP_HELP, OP_HELP_LONG, false, OP_HELP_HELP));
 		//Input
 		{
 			final OptionGroup inputGroup = new OptionGroup();
-			inputGroup.setRequired(true);
-			op = new Option(OP_STDIN, OP_STDIN_LONG, false, OP_STDIN_HELP);
-			op.setRequired(false);
-			inputGroup.addOption(op);
-			op = new Option(OP_IN_FILE, OP_IN_FILE_LONG, true, O_IN_FILE_HELP);
-			op.setRequired(false);
-			inputGroup.addOption(op);
+			inputGroup.addOption(new Option(OP_STDIN, OP_STDIN_LONG, false, OP_STDIN_HELP));
+			inputGroup.addOption(new Option(OP_IN_FILE, OP_IN_FILE_LONG, true, O_IN_FILE_HELP));
 			options.addOptionGroup(inputGroup);
 		}
 		//Output formats
 		{
 			final OptionGroup outputGroup = new OptionGroup();
-			outputGroup.setRequired(true);
-			op = new Option(OP_STDOUT, OP_STDOUT_LONG, false, OP_STDOUT_HELP);
-			op.setRequired(false);
-			outputGroup.addOption(op);
-			op = new Option(OP_OUT_FILE, OP_OUT_FILE_LONG, true, OP_OUT_FILE_HELP);
-			op.setRequired(false);
-			outputGroup.addOption(op);
-			op = new Option(OP_DISPLAY, OP_DISPLAY_LONG, false, OP_DISPLAY_HELP);
-			op.setRequired(false);
-			outputGroup.addOption(op);
+			outputGroup.addOption(new Option(OP_STDOUT, OP_STDOUT_LONG, false, OP_STDOUT_HELP));
+			outputGroup.addOption(new Option(OP_OUT_FILE, OP_OUT_FILE_LONG, true, OP_OUT_FILE_HELP));
+			outputGroup.addOption(new Option(OP_DISPLAY, OP_DISPLAY_LONG, false, OP_DISPLAY_HELP));
 			options.addOptionGroup(outputGroup);
 		}
-		op = new Option(OP_OUT_MAX_COLOR, OP_OUT_MAX_COLOR_LONG, true, OP_OUT_MAX_COLOR_HELP);
-		op.setRequired(false);
-		options.addOption(op);
-		op = new Option(OP_OUT_EDGE_DETECTION, OP_OUT_EDGE_DETECTION_LONG, true, OP_OUT_EDGE_DETECTION_HELP);
-		op.setRequired(false);
-		op.setOptionalArg(true);
-		options.addOption(op);
-		op = new Option(OP_OUT_GREYSCALE, OP_OUT_GREYSCALE_LONG, false, OP_OUT_GREYSCALE_HELP);
-		op.setRequired(false);
-		options.addOption(op);
+		//Output transformations
+		options.addOption(new Option(OP_OUT_MAX_COLOR, OP_OUT_MAX_COLOR_LONG, true, OP_OUT_MAX_COLOR_HELP));
+		{
+			final Option edgeDetectionOption = new Option(OP_OUT_EDGE_DETECTION, OP_OUT_EDGE_DETECTION_LONG, true, OP_OUT_EDGE_DETECTION_HELP);
+			edgeDetectionOption.setOptionalArg(true);
+			options.addOption(edgeDetectionOption);
+		}
+		options.addOption(new Option(OP_OUT_GREYSCALE, OP_OUT_GREYSCALE_LONG, false, OP_OUT_GREYSCALE_HELP));
 	}
 	public static void main(final String[] args)
 	{
 		try
 		{
 			final CommandLine parsed = new DefaultParser().parse(options, args);
+			if(parsed.hasOption(OP_HELP))
+			{
+				new HelpFormatter().printHelp(PPMTool.class.getName(), options);
+				return;
+			}
 			final int maxColor;
 			if(parsed.hasOption(OP_OUT_MAX_COLOR))
 			{
@@ -130,7 +126,7 @@ public class PPMTool
 				else
 				{
 					try { edgeDetectionAlgorithm = EdgeDetectionAlgorithm.valueOf(edgeDetectionAlgorithmStr); }
-					catch(IllegalArgumentException e) { throw new ParseException("Invalid " + OP_OUT_EDGE_DETECTION); }
+					catch(IllegalArgumentException e) { throw new ParseException("Invalid -" + OP_OUT_EDGE_DETECTION + "(--" + OP_OUT_EDGE_DETECTION_LONG + "): " + edgeDetectionAlgorithmStr); }
 				}
 			}
 			else
@@ -151,7 +147,7 @@ public class PPMTool
 		}
 		catch(ParseException e)
 		{
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 			new HelpFormatter().printHelp(PPMTool.class.getName(), options);
 			System.exit(1);
 		}
@@ -161,18 +157,29 @@ public class PPMTool
 			System.exit(255);
 		}
 	}
-	private static void doOutput(final CommandLine parsed, final PPM ppm, final int maxColor) throws IllegalArgumentException, IOException
+	private static void doOutput(final CommandLine parsed, final PPM ppm, final int maxColor) throws IllegalArgumentException, IOException, ParseException
 	{
 		Utils.throwIAEIfNull(parsed, CommandLine.class, "parsed");
 		Utils.throwIAEIfNull(ppm, PPM.class, "ppm");
 		final List<OutputStream> outs = new ArrayList<OutputStream>();
 		final List<OutputStream> closeableOuts = new ArrayList<OutputStream>();
+		//Ensure at least one output argument
+		if(! parsed.hasOption(OP_STDOUT) && ! parsed.hasOption(OP_OUT_FILE) && ! parsed.hasOption(OP_DISPLAY))
+		{
+			throw new ParseException("Expecting one or more of the following output arguments to be provided: ["
+				+ "-" + OP_STDOUT + "(--" + OP_STDOUT_LONG + "), "
+				+ "-" + OP_OUT_FILE + "(--" + OP_OUT_FILE_LONG + "), "
+				+ "-" + OP_DISPLAY + "(--" + OP_DISPLAY_LONG + ")"
+				+ "]");
+		}
 		//Write to output streams
 		try
 		{
 			//stdout
-			if(parsed.hasOption(OP_STDOUT_LONG))
+			if(parsed.hasOption(OP_STDOUT))
+			{
 				outs.add(System.out);
+			}
 			if(parsed.hasOption(OP_OUT_FILE))
 			{
 				final FileOutputStream fout = new FileOutputStream(new File(parsed.getOptionValue(OP_OUT_FILE)));
@@ -203,6 +210,9 @@ public class PPMTool
 		//Stdin
 		else if(parsed.hasOption(OP_STDIN))
 			return new BufferedReader(new InputStreamReader(System.in));
-		throw new RuntimeException("Invalid " + CommandLine.class.getSimpleName() + " provided. Are required args set up correctly?");
+		throw new ParseException("Expecting one of the following input arguments to be provided: ["
+			+ "-" + OP_IN_FILE + "(--" + OP_IN_FILE_LONG + "), "
+			+ "-" + OP_STDIN + "(--" + OP_STDIN_LONG + ")"
+			+ "]");
 	}
 }
