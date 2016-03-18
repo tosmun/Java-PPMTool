@@ -11,10 +11,21 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+/**
+ * A class which uses JavaFX to print a given
+ * PPM object to a canvas
+ * @author taylor.osmun
+ */
 public class Display extends Application
 {
+	//A single Canvas instance. display requests will print here
 	private static Canvas instance;
-	public static synchronized void display(final PPM ppm)
+	/**
+	 * @param ppm THe PPM object to write to the canvas
+	 * @throws IllegalStateException If display has been called previously
+	 * @throws IllegalArgumentException If the PPM object is invalid
+	 */
+	public static synchronized void display(final PPM ppm) throws IllegalStateException, IllegalArgumentException
 	{
 		if(instance != null)
 			throw new IllegalStateException("display already called previously. Can only be called once");
@@ -35,6 +46,11 @@ public class Display extends Application
 		launch(new String[0]);
 	}
 	@Override
+	/**
+	 * The standard javafx method which sets up the canvas
+	 * @param primaryStage The stage provided by javafx framework
+	 * @throws Exception If anything fails
+	 */
 	public void start(Stage primaryStage) throws Exception
 	{
 		if(instance == null)
