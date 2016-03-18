@@ -24,6 +24,11 @@ import com.ppm.PPM;
 import com.ppm.javafx.Display;
 import com.ppm.utils.Utils;
 
+/**
+ * The command line interface for PPM tool.
+ * Provides command line parsing via the usual Apache libraries.
+ * @author taylor.osmun
+ */
 public class PPMTool
 {
 	private static final int DEFAULT_MAX_COLOR = 255;
@@ -122,6 +127,12 @@ public class PPMTool
 			System.exit(255);
 		}
 	}
+	/**
+	 * Print given CommandLine to stdout if help was requested
+	 * @param parsed CommandLine object
+	 * @return True if help was requested, false otherwise.
+	 * @throws IllegalArgumentException If the CommandLine object is null
+	 */
 	private static boolean processHelp(final CommandLine parsed) throws IllegalArgumentException
 	{
 		Utils.throwIAEIfNull(parsed, CommandLine.class, "parsed");
@@ -132,6 +143,12 @@ public class PPMTool
 		}
 		return false;
 	}
+	/**
+	 * @param parsed CommandLine object
+	 * @return The maximum color (color factor) value from CommandLine, or default if unspecified.
+	 * @throws IllegalArgumentException If CommandLine object is null
+	 * @throws ParseException If the value is not an integer, or is outside the allowed rnage.
+	 */
 	private static int getMaxColor(final CommandLine parsed) throws IllegalArgumentException, ParseException
 	{
 		Utils.throwIAEIfNull(parsed, CommandLine.class, "parsed");
@@ -152,6 +169,12 @@ public class PPMTool
 			ret = DEFAULT_MAX_COLOR;
 		return ret;
 	}
+	/**
+	 * @param parsed CommandLine object
+	 * @return The requested EdgeDetectionAlgorithm, or default if unspecified
+	 * @throws IllegalArgumentException If CommandLine object is null
+	 * @throws ParseException If the given edge detection algorithm is invalid
+	 */
 	private static EdgeDetectionAlgorithm getEdgeDetectionAlgorithm(final CommandLine parsed) throws IllegalArgumentException, ParseException
 	{
 		Utils.throwIAEIfNull(parsed, CommandLine.class, "parsed");
@@ -171,6 +194,16 @@ public class PPMTool
 			ret = null;
 		return ret;
 	}
+	/**
+	 * The workhorse. Given the PPM content, and requested maxColor,
+	 * do any requested transformations and send to the output stream.
+	 * @param parsed The original CommandLine options
+	 * @param ppm The PPM object that we have read in
+	 * @param maxColor The maximum color (color factor) to use when writing to streams
+	 * @throws IllegalArgumentException If null input
+	 * @throws IOException If we fail to write to any streams
+	 * @throws ParseException If the CommandLine optiokns for streaming are invalid
+	 */
 	private static void doOutput(final CommandLine parsed, final PPM ppm, final int maxColor) throws IllegalArgumentException, IOException, ParseException
 	{
 		Utils.throwIAEIfNull(parsed, CommandLine.class, "parsed");
@@ -211,6 +244,11 @@ public class PPMTool
 		if(parsed.hasOption(OP_DISPLAY))
 			Display.display(ppm);
 	}
+	/**
+	 * @param parsed CommandLine object
+	 * @return A stream pointing to the input source that the user provided
+	 * @throws ParseException If the input source was not provided or is invalid
+	 */
 	private static BufferedReader getInput(final CommandLine parsed) throws ParseException
 	{
 		Utils.throwIAEIfNull(parsed, CommandLine.class, "parsed");
@@ -229,6 +267,11 @@ public class PPMTool
 			+ getOptionStr(OP_STDIN, OP_STDIN_LONG)
 			+ "]");
 	}
+	/**
+	 * @param opShort Short version of option
+	 * @param opLong Long version of option
+	 * @return String representation of the option values
+	 */
 	private static String getOptionStr(final String opShort, final String opLong)
 	{
 		return "-"+String.valueOf(opShort)+"(--"+String.valueOf(opLong)+")";
