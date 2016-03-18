@@ -2,9 +2,25 @@ package com.ppm;
 
 import com.ppm.utils.Utils;
 
+/**
+ * Represents a single pixel in a PPM object, backed
+ * by an RGB value.
+ * The actual value is stored in the range 0-1, which means
+ * some loss of percision is likely to occur, but this allows us
+ * to fully support PPM in any format.
+ * @author taylor.osmun
+ */
 public class Color
 {
 	private double r, g, b;
+	/**
+	 * A new color object from RGB values
+	 * @param r Red. Must be 0-1
+	 * @param g Green. Must be 0-1
+	 * @param b Blue. Must be 0-1
+	 * @throws IllegalPPMFormatException If any rgb value is not within the
+	 * expected range
+	 */
 	Color(final double r, final double g, final double b) throws IllegalPPMFormatException
 	{
 		if(r < 0 || r > 1)
@@ -17,13 +33,45 @@ public class Color
 		this.g = g;
 		this.b = b;
 	}
+	/**
+	 * @return The red value, between 0-1
+	 */
 	public double getRed() { return this.r; }
-	public long getRed(final int colorFactor) throws IllegalArgumentException { return getColor(getRed(), colorFactor); }
+	/**
+	 * @param colorFactor Values are stored in 0-1 by default, so 1 will
+	 * give you the same value. However, you could pass 255 for example, to get a range between 0-255.
+	 * @return The red value, with the applied color factor
+	 */
+	public long getRed(final int colorFactor) { return getColor(getRed(), colorFactor); }
+	/**
+	 * @return The green value, between 0-1
+	 */
 	public double getGreen() { return this.g; }
-	public long getGreen(final int colorFactor) throws IllegalArgumentException { return getColor(getGreen(), colorFactor); }
+	/**
+	 * @param colorFactor Values are stored in 0-1 by default, so 1 will
+	 * give you the same value. However, you could pass 255 for example, to get a range between 0-255.
+	 * @return The green value, with the applied color factor
+	 */
+	public long getGreen(final int colorFactor) { return getColor(getGreen(), colorFactor); }
+	/**
+	 * @return The blue value, between 0-1
+	 */
 	public double getBlue() { return this.b; }
-	public long getBlue(final int colorFactor) throws IllegalArgumentException { return getColor(getBlue(), colorFactor); }
-	private long getColor(final double value, final int colorFactor) throws IllegalArgumentException { return Math.round(value * colorFactor); }
+	/**
+	 * @param colorFactor Values are stored in 0-1 by default, so 1 will
+	 * give you the same value. However, you could pass 255 for example, to get a range between 0-255.
+	 * @return The blue value, with the applied color factor
+	 */
+	public long getBlue(final int colorFactor) { return getColor(getBlue(), colorFactor); }
+	/**
+	 * @param value The color value to apply the colorFactor to
+	 * @param colorFactor The colorFactor to apply
+	 * @return The given colorFactor to the color value 
+	 */
+	private long getColor(final double value, final int colorFactor) { return Math.round(value * colorFactor); }
+	/**
+	 * @return A complete clone of this Color object
+	 */
 	public Color clone()
 	{
 		try
@@ -61,8 +109,17 @@ public class Color
 		return true;
 	}
 	@Override
+	/**
+	 * @return The string representing of this Color using 255 as
+	 * the color factor.
+	 */
 	public String toString() { return toString(255); }
-	public String toString(int maxColor) throws IllegalArgumentException
+	/**
+	 * @param maxColor The color factor to use
+	 * @return The string representation of this Color using
+	 * the given color factor (maxColor).
+	 */
+	public String toString(int maxColor)
 	{
 		return new StringBuilder()
 			.append(this.getRed(maxColor)).append(" ")
