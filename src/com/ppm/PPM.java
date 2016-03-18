@@ -6,14 +6,32 @@ import java.io.OutputStream;
 
 import com.ppm.utils.Utils;
 
+/**
+ * Represents the PPM file format.
+ * Constructs PPM from any given reader, and will store
+ * each pixel in memory as a Color entry in the canvas matrix.
+ * @author taylor.osmun
+ */
 public class PPM
 {
+	//This is the typical magic number to support
 	public static final String MAGIC_NUMBER = "P3";
+	//Maximum reasonable value for a single RGB value when representing as a int
 	public static final int MAX_MAX_COLOR_VALUE = 65536;
+	//Greyscale factors to use when converting to greyscale
 	public static final double GREYSCALE_RED_FACTOR = 0.2126;
 	public static final double GREYSCALE_GREEN_FACTOR = 0.7152;
-	public static final double GREYSCALE_BLUE_FACTOR = 0.0722; 
+	public static final double GREYSCALE_BLUE_FACTOR = 0.0722;
+	//The color matrix representing the PPM file
 	private Color[][] colorMap;
+	/**
+	 * Constructs a new PPM from the given reader (i.e. input stream).
+	 * @param r Where to read the PPM content from
+	 * @throws NullPointerException Null input
+	 * @throws IOException If we fail to read from the given reader
+	 * @throws IllegalPPMFormatException Thrown if the PPM content provided by
+	 * the reader is illegally formatted
+	 */
 	public PPM(final BufferedReader r) throws NullPointerException, IOException, IllegalPPMFormatException
 	{
 		Utils.throwNPEIfNull(r, BufferedReader.class, "r");
@@ -57,23 +75,44 @@ public class PPM
 			}
 		}
 	}
+	/**
+	 * Internal constructor useful when transforming existing PPM objects.
+	 * @param colorMap Existing Color map to simply assign to the new instance
+	 */
 	private PPM(final Color[][] colorMap)
 	{
 		Utils.throwNPEIfNull(colorMap, Color[][].class, "colorMap");
 		this.colorMap = colorMap;
 	}
+	/**
+	 * @return The backing color map (matrix) representing the PPM content.
+	 * Each entry in the matrix represents a single RGB (Color) value.
+	 */
 	public Color[][] getColorMap()
 	{
 		return this.colorMap;
 	}
+	/**
+	 * @return The width of the canvas
+	 */
 	public int getWidth()
 	{
 		return this.colorMap.length;
 	}
+	/**
+	 * @return The height of the canvas
+	 */
 	public int getHeight()
 	{
 		return (this.colorMap.length <= 0 ? 0 : this.colorMap[0].length);
 	}
+	/**
+	 * @param x coordinate X
+	 * @param y coordinate Y
+	 * @return The Color at a given coordinate
+	 * @throws IllegalArgumentException Thrown if the coordinate is outside
+	 * the bounds of the canvas
+	 */
 	public Color getColor(final int x, final int y) throws IllegalArgumentException
 	{
 		if(x < 0 || x > getWidth())
@@ -82,6 +121,9 @@ public class PPM
 			throw new IllegalArgumentException("y is out of range. Valid Range for this " + PPM.class.getSimpleName() + " is: 0-" + getHeight() + ". Given: " + y);
 		return this.colorMap[x][y];
 	}
+	/**
+	 * @return Return an exact clone of this PPM object
+	 */
 	public PPM clone()
 	{
 		final int width = getWidth();
@@ -92,6 +134,15 @@ public class PPM
 				newColorMap[x][y] = this.colorMap[x][y].clone();
 		return new PPM(newColorMap);
 	}
+	/**
+	 * Write the PPM content represented by this object to the given
+	 * output streams.
+	 * @param maxColor The color value to use when scaling the RGB values.
+	 * Typical values are 1 or 255
+	 * @param outs The streams to write to. Null streams are ignored
+	 * @throws IllegalArgumentException If the maxColor value is invalid
+	 * @throws IOException If we fail to write to any stream
+	 */
 	public void writeToStreams(final int maxColor, final OutputStream ... outs) throws IllegalArgumentException, IOException
 	{
 		verifyMaxColor(maxColor);
@@ -124,6 +175,11 @@ public class PPM
 			}
 		}
 	}
+	/**
+	 * Transform (in-place) this PPM object to greyscale.
+	 * Note: If you wish to retain the original PPM object as well,
+	 * simply use clone() first.
+	 */
 	public void greyscale()
 	{
 		final int width = getWidth();
@@ -139,6 +195,14 @@ public class PPM
 			}
 		}
 	}
+	/**
+	 * Detect (in-place) the edges in this PPM object using the given
+	 * edge detection algorithm.
+	 * Note: If you wish to retain the original PPM object as well,
+	 * simply use clone() first.
+	 * @param edgeDetectionAlgorithm The edge detection algorithm to use
+	 * @throws IllegalArgumentException If the edge detection is invalid (i.e. null)
+	 */
 	public void detectEdges(final EdgeDetectionAlgorithm edgeDetectionAlgorithm) throws IllegalArgumentException
 	{
 		Utils.throwIAEIfNull(edgeDetectionAlgorithm, EdgeDetectionAlgorithm.class, "edgeDetectionAlgorithm");
@@ -150,6 +214,10 @@ public class PPM
 			throw new RuntimeException("Unrecognized " + EdgeDetectionAlgorithm.class.getSimpleName() + ": " + edgeDetectionAlgorithm);
 		this.colorMap = newColorMap;
 	}
+	/**
+	 * @return A new Color[][] representing the edges of this PPM object
+	 * using the sobel edge detection algorithm
+	 */
 	private Color[][] detectSobelEdges()
 	{
 		final int width = getWidth();
@@ -268,6 +336,12 @@ public class PPM
 		}
 		return ret;
 	}
+	/**
+	 * @param r The reader to reference
+	 * @return The next integer in the reader, or null if end of the stream is reached.
+	 * @throws IOException If we fail to read from the stream
+	 * @throws IllegalPPMFormatException If the next value is present, but not a valid Integer
+	 */
 	private Integer readNextInteger(final BufferedReader r) throws IOException, IllegalPPMFormatException
 	{
 		final String word = readNextWord(r);
@@ -282,6 +356,11 @@ public class PPM
 			throw new IllegalPPMFormatException("Expected Integer, but could not parse: " + word, e);
 		}
 	}
+	/**
+	 * @param r The reader to reference
+	 * @return The next word (non-comment String), or null if end of the stream is reached
+	 * @throws IOException If we fail to read from th estream
+	 */
 	private String readNextWord(final BufferedReader r) throws IOException
 	{
 		String ret = null;
@@ -304,6 +383,12 @@ public class PPM
 		}
 		return ret;
 	}
+	/**
+	 * Simple helper to check valid max color input
+	 * @param maxColor Color to check
+	 * @throws IllegalArgumentException If maxColor is not within the
+	 * expected range
+	 */
 	private static void verifyMaxColor(final int maxColor) throws IllegalArgumentException
 	{
 		if(maxColor < 0 || maxColor > MAX_MAX_COLOR_VALUE)
