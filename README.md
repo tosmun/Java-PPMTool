@@ -32,7 +32,9 @@ Converts the PPM image to greyscale using the following color factors:
 Example:
 ```java -jar PPM-standalone-cli-1.0.jar -if potatoes.ppm -g -d```
 
-TODO
+Original | Greyscale
+--- | ---
+| <img src="examples/greyscale/lulu_orig.png" width="100%" height="100%" /> | <img src="examples/greyscale/lulu_greyscale.png" width="100%" height="100%" /> |
 
 ## Edge Detection
 
