@@ -23,18 +23,18 @@ task standaloneJar(dependsOn: compileJava, type: Jar) {
 	baseName = "PPM"
 	from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
 	from sourceSets.main.output
-    manifest { attributes("Main-Class": "com.ppm.cli.PPMTool") }
+	manifest { attributes("Main-Class": "com.ppm.cli.PPMTool") }
 }
 task cliJar(dependsOn: compileJava, type: Jar) {
 	appendix "cli"
 	baseName = "PPM"
 	from sourceSets.main.output
-    manifest { attributes("Main-Class": "com.ppm.cli.PPMTool") }
+	manifest { attributes("Main-Class": "com.ppm.cli.PPMTool") }
 }
 jar {
 	appendix "api"
 	baseName = "PPM"
 	from sourceSets.main.output
 	exclude('com/ppm/cli/**')   
-    exclude('com/ppm/javafx/**')  
+	exclude('com/ppm/javafx/**')  
 }

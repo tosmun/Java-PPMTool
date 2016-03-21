@@ -364,6 +364,7 @@ public class PPM
 	private String readNextWord(final BufferedReader r) throws IOException
 	{
 		String ret = null;
+		boolean inComment = false;
 		while(true)
 		{
 			final int v = r.read();
@@ -373,10 +374,20 @@ public class PPM
 			final char c = (char) v;
 			if(c == ' ' || c == '\t' || c == '\r' || c == '\n')
 			{
+				if(c == '\r' || c == '\n')
+					inComment = false;
 				if(ret != null)
 					break;
 				continue;
 			}
+			else if(c == '#')
+			{
+				inComment = true;
+				ret = null;
+				continue;
+			}
+			else if(inComment)
+				continue;
 			if(ret == null)
 				ret = "";
 			ret += c;
