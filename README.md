@@ -47,4 +47,6 @@ PPMTool will perform the edge detection for you using the sobel operator approac
 Example:
 ```java -jar PPM-standalone-cli-1.0.jar -if potatoes.ppm -g -e -d```
 
-TODO
+Original | Sobel Edges
+--- | ---
+| <img src="examples/sobel/machine_orig.png" width="100%" height="100%" /> | <img src="examples/sobel/machine_sobel.png" width="100%" height="100%" /> |
