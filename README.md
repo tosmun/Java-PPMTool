@@ -30,7 +30,7 @@ Converts the PPM image to greyscale using the following color factors:
 * Blue: 0.0722
 
 Example:
-```java -jar PPM-standalone-cli-1.0.jar -if potatoes.ppm -g -d```
+```java -jar PPM-standalone-cli-1.0.jar -if examples/greyscale/lulu.ppm -g -d```
 
 Original | Greyscale
 --- | ---
@@ -45,7 +45,7 @@ The Sobel operator focuses on finding edges based on the "brightness" of the ima
 PPMTool will perform the edge detection for you using the sobel operator approach, but it is recommended you first apply the greyscale transformation to achieve the maximum results.
 
 Example:
-```java -jar PPM-standalone-cli-1.0.jar -if potatoes.ppm -g -e -d```
+```java -jar PPM-standalone-cli-1.0.jar -if examples/sobel/machine.ppm -g -e -d```
 
 Original | Sobel Edges
 --- | ---
